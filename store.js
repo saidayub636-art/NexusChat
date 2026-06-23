@@ -295,6 +295,9 @@ const Store = (() => {
       read: false,
       reactions: [],
       edited: false,
+      replyTo: msg.replyTo || null,
+      forwarded: msg.forwarded || false,
+      status: 'sent',
     };
     state.messages[convId].push(fullMsg);
     _save('nexus_messages', state.messages);
@@ -397,6 +400,117 @@ const Store = (() => {
   }
   function isFavorite(userId) { return getFavorites().includes(userId); }
 
+  // ── Bookmarks ──────────────────────────────────────
+  function getBookmarks() { return _load('nexus_bookmarks') || []; }
+  function toggleBookmark(convId, msgId) {
+    let bookmarks = getBookmarks();
+    const key = `${convId}:${msgId}`;
+    bookmarks = bookmarks.includes(key) ? bookmarks.filter(b => b !== key) : [...bookmarks, key];
+    _save('nexus_bookmarks', bookmarks);
+    return bookmarks.includes(key);
+  }
+  function isBookmarked(convId, msgId) {
+    return getBookmarks().includes(`${convId}:${msgId}`);
+  }
+
+  // ── Message Status ─────────────────────────────────
+  function updateMessageStatus(convId, msgId, status) {
+    const msgs = state.messages[convId];
+    if (!msgs) return null;
+    const msg = msgs.find(m => m.id === msgId);
+    if (msg) msg.status = status;
+    _save('nexus_messages', state.messages);
+    return msg;
+  }
+
+  // ── Group Chats ────────────────────────────────────
+  function createGroupChat(name, members, createdBy) {
+    const groupId = 'group_' + Date.now();
+    const group = {
+      id: groupId, name, members, createdBy, createdAt: Date.now(),
+      description: '', avatar: null, admin: createdBy,
+    };
+    let groups = _load('nexus_groups') || [];
+    groups.push(group);
+    _save('nexus_groups', groups);
+    state.messages[groupId] = [];
+    _save('nexus_messages', state.messages);
+    return group;
+  }
+
+  function getGroups(userId) {
+    let groups = _load('nexus_groups') || [];
+    return groups.filter(g => g.members.includes(userId));
+  }
+
+  function updateGroup(groupId, data) {
+    let groups = _load('nexus_groups') || [];
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return null;
+    if (data.name) group.name = data.name;
+    if (data.description !== undefined) group.description = data.description;
+    if (data.avatar !== undefined) group.avatar = data.avatar;
+    _save('nexus_groups', groups);
+    return group;
+  }
+
+  function addGroupMember(groupId, userId) {
+    let groups = _load('nexus_groups') || [];
+    const group = groups.find(g => g.id === groupId);
+    if (group && !group.members.includes(userId)) {
+      group.members.push(userId);
+      _save('nexus_groups', groups);
+    }
+    return group;
+  }
+
+  function removeGroupMember(groupId, userId) {
+    let groups = _load('nexus_groups') || [];
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+      group.members = group.members.filter(m => m !== userId);
+      _save('nexus_groups', groups);
+    }
+    return group;
+  }
+
+  // ── Typing Indicator ────────────────────────────────
+  function setTyping(convId, userId, typing) {
+    const key = `nexus_typing_${convId}`;
+    let typingUsers = _load(key) || [];
+    if (typing) {
+      if (!typingUsers.includes(userId)) typingUsers.push(userId);
+    } else {
+      typingUsers = typingUsers.filter(u => u !== userId);
+    }
+    _save(key, typingUsers);
+    return typingUsers;
+  }
+
+  function getTyping(convId) {
+    return _load(`nexus_typing_${convId}`) || [];
+  }
+
+  // ── Online Status ──────────────────────────────────
+  function setUserStatus(userId, status, statusText) {
+    const user = getUserById(userId);
+    if (user) {
+      user.status = status;
+      if (statusText !== undefined) user.statusText = statusText;
+      user.lastSeen = Date.now();
+      _save('nexus_users', state.users);
+    }
+    return user;
+  }
+
+  function simulateOnlineStatus() {
+    if (state.currentUser) {
+      state.currentUser.status = 'online';
+      state.currentUser.lastSeen = Date.now();
+      _save('nexus_users', state.users);
+    }
+  }
+
   // ── Helpers ────────────────────────────────────────
   function _save(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) { console.warn('Storage full'); }
@@ -446,6 +560,11 @@ const Store = (() => {
     togglePin, toggleArchive, toggleMute,
     getBlocked, toggleBlock, isBlocked,
     getFavorites, toggleFavorite, isFavorite,
+    getBookmarks, toggleBookmark, isBookmarked,
+    updateMessageStatus,
+    createGroupChat, getGroups, updateGroup, addGroupMember, removeGroupMember,
+    setTyping, getTyping,
+    setUserStatus, simulateOnlineStatus,
     formatTime, formatFullTime, formatDateSep,
     setActiveConv, getActiveConv,
   };

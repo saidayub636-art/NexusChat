@@ -280,8 +280,19 @@
           <div class="typing-bubble">
             <span></span><span></span><span></span>
           </div>
+          <span class="typing-text" id="typing-text"></span>
         </div>
         <div id="scroll-anchor"></div>
+      </div>
+
+      <!-- Message Reply/Quote UI -->
+      <div class="message-reply-preview hidden" id="message-reply-preview">
+        <div class="reply-info">
+          <span class="reply-to-text">Replying to:</span>
+          <span class="reply-author" id="reply-author"></span>
+        </div>
+        <div class="reply-text" id="reply-text"></div>
+        <button class="icon-btn close-reply" onclick="cancelReply()">×</button>
       </div>
 
       <!-- Input area -->
@@ -391,6 +402,45 @@
 
 <!-- Context Menu -->
 <div class="context-menu hidden" id="context-menu"></div>
+
+<!-- Group Chat Modal -->
+<div class="modal-overlay hidden" id="group-modal">
+  <div class="modal glass wide">
+    <div class="modal-header">
+      <h3 id="group-modal-title">Create Group</h3>
+      <button class="icon-btn" onclick="closeModal('group-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="group-content" id="group-content"></div>
+  </div>
+</div>
+
+<!-- Contact Profile Modal -->
+<div class="modal-overlay hidden" id="contact-modal">
+  <div class="modal glass wide">
+    <div class="modal-header">
+      <h3>Profile</h3>
+      <button class="icon-btn" onclick="closeModal('contact-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="contact-profile-content" id="contact-profile-content"></div>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notifications-panel hidden" id="notifications-panel">
+  <div class="notifications-header">
+    <h3>Notifications</h3>
+    <button class="icon-btn" onclick="closeNotifications()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="notifications-list" id="notifications-list">
+    <div class="notifications-empty">No notifications</div>
+  </div>
+</div>
 
 <!-- Toast notifications -->
 <div class="toast-container" id="toast-container"></div>
